@@ -1,0 +1,11 @@
+%{"amqp": {:hex, :amqp, "0.1.4"},
+  "amqp_client": {:hex, :amqp_client, "3.5.6"},
+  "certifi": {:hex, :certifi, "0.3.0"},
+  "exprotobuf": {:git, "https://github.com/bitwalker/exprotobuf.git", "f66bcec87c3c50b9546a54dfef9b96c13b64bff6", []},
+  "gpb": {:hex, :gpb, "3.19.0"},
+  "hackney": {:hex, :hackney, "1.4.10"},
+  "httpoison": {:hex, :httpoison, "0.8.1"},
+  "idna": {:hex, :idna, "1.1.0"},
+  "mimerl": {:hex, :mimerl, "1.0.2"},
+  "rabbit_common": {:hex, :rabbit_common, "3.5.6"},
+  "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"}}

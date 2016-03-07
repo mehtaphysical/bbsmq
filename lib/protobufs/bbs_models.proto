@@ -1,0 +1,389 @@
+message PortRange {
+  optional uint32 start = 1;
+  optional uint32 end = 2;
+}
+
+message ICMPInfo {
+  optional int32 type = 1;
+  optional int32 code = 2;
+}
+
+message SecurityGroupRule {
+  optional string protocol = 1;
+  repeated string destinations = 2;
+  repeated uint32 ports = 3;
+  optional PortRange port_range = 4;
+  optional ICMPInfo icmp_info = 5;
+  optional bool log = 6;
+}
+
+message EnvironmentVariable {
+  optional string name = 1;
+  optional string value = 2;
+}
+
+message Error {
+  enum Type {
+    UnknownError = 0;
+    InvalidDomain = 1;
+
+    UnkownVersion          = 2;
+    InvalidRecord          = 3;
+    InvalidRequest         = 4;
+    InvalidResponse        = 5;
+    InvalidProtobufMessage = 6;
+    InvalidJSON            = 7;
+    FailedToOpenEnvelope   = 8;
+    InvalidStateTransition = 9;
+
+    Unauthorized = 10;
+
+    ResourceConflict = 11;
+    ResourceExists   = 12;
+    ResourceNotFound = 13;
+    RouterError      = 14;
+
+    ActualLRPCannotBeClaimed   = 15;
+    ActualLRPCannotBeStarted   = 16;
+    ActualLRPCannotBeCrashed   = 17;
+    ActualLRPCannotBeFailed    = 18;
+    ActualLRPCannotBeRemoved   = 19;
+    ActualLRPCannotBeStopped   = 20;
+    ActualLRPCannotBeUnclaimed = 21;
+    ActualLRPCannotBeEvacuated = 22;
+
+    DesiredLRPCannotBeUpdated = 23;
+
+    RunningOnDifferentCell = 24;
+
+    DesiredLRPSchedulingInfoCannotBeUpdated = 25;
+  }
+  optional Type type = 1;
+  optional string message = 2;
+}
+
+message Action {
+  oneof action {
+    DownloadAction download_action = 1;
+    UploadAction upload_action = 2;
+    RunAction run_action = 3;
+    TimeoutAction timeout_action = 4;
+    EmitProgressAction emit_progress_action = 5;
+    TryAction try_action = 6;
+    ParallelAction parallel_action = 7;
+    SerialAction serial_action = 8;
+    CodependentAction codependent_action = 9;
+  }
+}
+
+message DownloadAction {
+  optional string artifact = 1;
+  optional string from = 2;
+  optional string to = 3;
+  optional string cache_key = 4;
+  optional string log_source = 5;
+  optional string user = 6;
+}
+
+message UploadAction {
+  optional string artifact = 1;
+  optional string from = 2;
+  optional string to = 3;
+  optional string log_source = 4;
+  optional string user = 5;
+}
+
+message RunAction {
+  optional string path = 1;
+  repeated string args = 2;
+  optional string dir = 3;
+  repeated EnvironmentVariable env = 4;
+  optional ResourceLimits resource_limits = 5;
+  optional string user = 6;
+  optional string log_source = 7;
+  optional bool suppress_log_output = 8;
+}
+
+message TimeoutAction {
+  optional Action action = 1;
+  optional int64 timeout = 2;
+  optional string log_source = 3;
+}
+
+message EmitProgressAction {
+  optional Action action = 1;
+  optional string start_message = 2;
+  optional string success_message = 3;
+  optional string failure_message_prefix = 4;
+  optional string log_source = 5;
+}
+
+message TryAction {
+  optional Action action = 1;
+  optional string log_source = 2;
+}
+
+message ParallelAction {
+  repeated Action actions = 1;
+  optional string log_source = 2;
+}
+
+message SerialAction {
+  repeated Action actions = 1;
+  optional string log_source = 2;
+}
+
+message CodependentAction {
+  repeated Action actions = 1;
+  optional string log_source = 2;
+}
+
+message ResourceLimits {
+  optional uint64 nofile = 1;
+}
+
+message CachedDependency {
+  optional string name = 1;
+  optional string from = 2;
+  optional string to = 3;
+  optional string cache_key = 4;
+  optional string log_source = 5;
+}
+
+message ActualLRPCreatedEvent  {
+  optional ActualLRPGroup actual_lrp_group = 1;
+}
+
+message ActualLRPChangedEvent {
+  optional ActualLRPGroup before = 1;
+  optional ActualLRPGroup after = 2;
+}
+
+message ActualLRPRemovedEvent {
+  optional ActualLRPGroup actual_lrp_group = 1;
+}
+
+message ModificationTag {
+  optional string epoch = 1;
+  optional uint32 index = 2;
+}
+message ActualLRPGroup {
+  optional ActualLRP instance = 1;
+  optional ActualLRP evacuating = 2;
+}
+
+message PortMapping {
+  optional uint32 container_port = 1;
+  optional uint32 host_port = 2;
+}
+
+message ActualLRPKey {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+  optional string domain = 3;
+}
+
+message ActualLRPInstanceKey {
+  optional string instance_guid = 1;
+  optional string cell_id = 2;
+}
+
+message ActualLRPNetInfo {
+  optional string address = 1;
+  repeated PortMapping ports = 2;
+}
+
+message ActualLRP {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional ActualLRPNetInfo actual_lrp_net_info = 3;
+  optional int32 crash_count = 4;
+  optional string crash_reason = 5;
+  optional string state = 6;
+  optional string placement_error = 7;
+  optional int64 since = 8;
+  optional ModificationTag modification_tag = 9;
+}
+
+message ActualLRPLifecycleResponse {
+  optional Error error = 1;
+}
+
+message ActualLRPGroupsResponse {
+  optional Error error = 1;
+  repeated ActualLRPGroup actual_lrp_groups = 2;
+}
+
+message ActualLRPGroupResponse {
+  optional Error error = 1;
+  optional ActualLRPGroup actual_lrp_group = 2;
+}
+
+message ActualLRPGroupsRequest {
+  optional string domain = 1;
+  optional string cell_id = 2;
+}
+
+message ActualLRPGroupsByProcessGuidRequest {
+  optional string process_guid = 1;
+}
+
+message ActualLRPGroupByProcessGuidAndIndexRequest {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+}
+
+message ClaimActualLRPRequest {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 3;
+}
+
+message StartActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional ActualLRPNetInfo actual_lrp_net_info = 3;
+}
+
+message CrashActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional string error_message = 3;
+}
+
+message FailActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional string error_message = 2;
+}
+
+message RetireActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+}
+
+message RemoveActualLRPRequest {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+}
+
+message DesiredLRPSchedulingInfo {
+  optional DesiredLRPKey desired_lrp_key = 1;
+
+  optional string annotation = 2;
+  optional int32 instances = 3;
+
+  optional DesiredLRPResource desired_lrp_resource = 4;
+
+  optional bytes routes = 5;
+  optional ModificationTag modification_tag = 6;
+}
+
+message DesiredLRPRunInfo {
+  optional DesiredLRPKey desired_lrp_key = 1;
+
+  repeated EnvironmentVariable environment_variables = 2;
+  optional Action setup = 3;
+  optional Action action = 4;
+  optional Action monitor = 5;
+
+  optional uint32 start_timeout = 6;
+  optional bool privileged = 7;
+
+  optional uint32 cpu_weight = 8;
+  repeated uint32 ports = 9;
+  repeated SecurityGroupRule egress_rules = 10;
+  optional string log_source = 11;
+  optional string metrics_guid = 12;
+  optional int64 created_at = 13;
+  repeated CachedDependency cached_dependencies = 14;
+  optional string legacy_download_user = 15;
+  optional string trusted_system_certificates_path = 16;
+}
+
+message DesiredLRPUpdate {
+  optional int32 instances = 1;
+  optional bytes routes = 2;
+  optional string annotation = 3;
+}
+
+message DesiredLRPKey {
+  optional string process_guid = 1;
+  optional string domain = 2;
+  optional string log_guid = 3;
+}
+
+message DesiredLRPResource {
+  optional int32 memory_mb = 1;
+  optional int32 disk_mb = 2;
+  optional string root_fs = 3;
+}
+
+message DesiredLRP {
+  optional string process_guid = 1;
+  optional string domain = 2;
+  optional string root_fs = 3;
+  optional int32 instances = 4;
+  repeated EnvironmentVariable environment_variables = 5;
+  optional Action setup = 6;
+  optional Action action = 7;
+  optional uint32 start_timeout = 8;
+  optional Action monitor = 9;
+  optional int32 disk_mb = 10;
+  optional int32 memory_mb = 11;
+  optional uint32 cpu_weight = 12;
+  optional bool privileged = 13;
+  repeated uint32 ports = 14;
+  optional bytes routes = 15;
+  optional string log_source = 16;
+  optional string log_guid = 17;
+  optional string metrics_guid = 18;
+  optional string annotation = 19;
+  repeated SecurityGroupRule egress_rules = 20;
+  optional ModificationTag modification_tag = 21;
+  repeated CachedDependency cached_dependencies = 22;
+  optional string legacy_download_user = 23;
+  optional string trusted_system_certificates_path = 24;
+}
+
+message DesiredLRPLifecycleResponse {
+  optional Error error = 1;
+}
+
+message DesiredLRPsResponse {
+  optional Error error = 1;
+  repeated DesiredLRP desired_lrps = 2;
+}
+
+message DesiredLRPsRequest {
+  optional string domain = 1;
+}
+
+message DesiredLRPResponse {
+  optional Error error = 1;
+  optional DesiredLRP desired_lrp = 2;
+}
+
+message DesiredLRPSchedulingInfosResponse {
+  optional Error error = 1;
+  repeated DesiredLRPSchedulingInfo desired_lrp_scheduling_infos = 2;
+}
+
+message DesiredLRPByProcessGuidRequest {
+  optional string process_guid = 1;
+}
+
+message DesireLRPRequest {
+  optional DesiredLRP desired_lrp = 1;
+}
+
+message UpdateDesiredLRPRequest {
+  optional string process_guid = 1;
+  optional DesiredLRPUpdate update = 2;
+}
+
+message RemoveDesiredLRPRequest {
+  optional string process_guid = 1;
+}
+
+message PingResponse {
+  optional bool available = 1;
+}
