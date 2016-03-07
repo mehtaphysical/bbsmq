@@ -38,31 +38,31 @@ defmodule BBSEndpointMqConsummer do
     {:noreply, state}
   end
 
-  def handle_info({:basic_deliver, payload, %{delivery_tag: tag, redelivered: redelivered, routing_key: endpoint}}, [bbs_address: bbs_address, chan: chan]) do
-    spawn fn -> consume(chan, bbs_address, tag, redelivered, endpoint, payload) end
+  def handle_info({:basic_deliver, payload, meta_data}, [bbs_address: bbs_address, chan: chan]) do
+    spawn fn -> consume(chan, bbs_address, payload, meta_data) end
     {:noreply, [bbs_address: bbs_address, chan: chan]}
   end
 
-  defp consume(channel, bbs_address, tag, redelivered, endpoint, payload) do
+
+  defp consume(channel, bbs_address, payload, meta_data) do
     try do
-      endpoint_consumer bbs_address, endpoint, payload
-      Basic.ack channel, tag
+      endpoint_consumer channel, bbs_address, meta_data.routing_key, meta_data.reply_to, payload
+      Basic.ack channel, meta_data.delivery_tag
     rescue
       exception ->
         IO.puts exception
         # Requeue unless it's a redelivered message.
         # This means we will retry consuming a message once in case of exception
         # before we give up and have it moved to the error queue
-        Basic.reject channel, tag, requeue: not redelivered
+        Basic.reject channel, meta_data.delivery_tag, requeue: not meta_data.redelivered
     end
   end
 
-  defp endpoint_consumer(bbs_address, endpoint, payload) do
-    IO.puts endpoint
+  defp endpoint_consumer(channel, bbs_address, endpoint, reply_to, payload) do
     case endpoint do
       "Ping" ->
         {:ok, encoded_response} = BBSHTTPClient.ping bbs_address
-        IO.puts BBSModels.PingResponse.decode(encoded_response).available
+        Basic.publish channel, "", reply_to, encoded_response
       _ -> IO.puts "DEFAULT"
     end
   end

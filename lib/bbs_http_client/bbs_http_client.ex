@@ -12,7 +12,7 @@ defmodule BBSHTTPClient do
     request(bbs_address <> @ping_path)
   end
 
-  def cell_list(bbs_address) do
+  def cells(bbs_address) do
     get_request bbs_address
   end
 
