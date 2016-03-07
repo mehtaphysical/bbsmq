@@ -13,10 +13,23 @@ defmodule BBSClientTest do
     assert BBSModels.PingResponse.decode(res).available
   end
 
-  test "ActualLRP List" do
-    {:ok, res} = ActualLRPClient.List.list @bbs_address
+  test "ActualLRP list" do
+    {:ok, res} = BBSClient.ActualLRP.list @bbs_address
     actual_lrps = BBSModels.ActualLRPGroupsResponse.decode(res).actual_lrp_groups
     assert length(actual_lrps) > 0
+  end
+
+  test "ActualLRP list_by_process_guid" do
+    {:ok, res} = BBSClient.ActualLRP.list_by_process_guid @bbs_address, process_guid: @guid
+    actual_lrps = BBSModels.ActualLRPGroupsResponse.decode(res).actual_lrp_groups
+    assert length(actual_lrps) > 0
+    assert hd(actual_lrps).instance.actual_lrp_key.process_guid == @guid
+  end
+
+  test "ActualLRP get_by_process_guid_and_index" do
+    {:ok, res} = BBSClient.ActualLRP.get_by_process_guid_and_index @bbs_address, process_guid: @guid, index: 0
+    actual_lrp = BBSModels.ActualLRPGroupResponse.decode(res).actual_lrp_group
+    assert actual_lrp.instance.actual_lrp_key.process_guid == @guid
   end
 
   test "DesiredLRP list" do
