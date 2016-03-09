@@ -1,5 +1,7 @@
 defmodule BBSMq do
-  def start(rabbitmq_address, bbs_address) do
-    BBSEndpointMqConsummer.start_link rabbitmq_address, bbs_address
+  use Application
+
+  def start(_type, _args) do
+    BBSMq.Supervisor.start_link
   end
 end

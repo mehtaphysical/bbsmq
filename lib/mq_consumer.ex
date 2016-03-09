@@ -1,4 +1,4 @@
-defmodule BBSEndpointMqConsummer do
+defmodule BBSMq.Consumer do
   use GenServer
   use AMQP
 
@@ -58,12 +58,20 @@ defmodule BBSEndpointMqConsummer do
     end
   end
 
-  defp endpoint_consumer(channel, bbs_address, endpoint, reply_to, payload) do
-    case endpoint do
-      "Ping" ->
-        {:ok, encoded_response} = BBSHTTPClient.ping bbs_address
-        Basic.publish channel, "", reply_to, encoded_response
-      _ -> IO.puts "DEFAULT"
-    end
+  defp endpoint_consumer(channel, bbs_address, routing_key, reply_to, payload) do
+    {:ok, encoded_response} = apply(BBSHTTPClient, routing_key_to_endpoint(routing_key), [bbs_address, payload])
+    Basic.publish channel, "", reply_to, encoded_response
+  end
+
+  def routing_key_to_endpoint(routing_key) do
+    String.split(routing_key, "") |> Enum.map(fn(letter) ->
+      downcased_letter = String.downcase(letter)
+      if String.equivalent?(letter, downcased_letter) do
+        letter
+      else
+        "_" <> downcased_letter
+      end
+    end) |> Enum.join("") |> String.lstrip(?_)
+    |> String.replace("l_r_p", "lrp") |> String.to_atom
   end
 end

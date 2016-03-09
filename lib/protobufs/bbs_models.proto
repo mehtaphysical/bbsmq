@@ -387,3 +387,17 @@ message RemoveDesiredLRPRequest {
 message PingResponse {
   optional bool available = 1;
 }
+
+message DomainsResponse {
+  optional Error error = 1;
+  repeated string domains = 2;
+}
+
+message UpsertDomainResponse {
+  optional Error error = 1;
+}
+
+message UpsertDomainRequest {
+  optional string domain = 1;
+  optional uint32 ttl = 2;
+}

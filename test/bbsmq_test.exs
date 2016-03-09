@@ -15,10 +15,11 @@ defmodule BBSMqTest do
 
     AMQP.Queue.declare chan, @reply_to
 
-    AMQP.Basic.publish chan, "bbs_exchange", "Ping", "ok", reply_to: @reply_to
+    AMQP.Basic.publish chan, "bbs_exchange", "Domains", "ok", reply_to: @reply_to
 
     AMQP.Queue.subscribe chan, @reply_to, fn(payload, _meta) ->
-      assert BBSModels.PingResponse.decode(payload).available
+      Enum.each(BBSModels.DomainsResponse.decode(payload).domains, &(IO.puts &1))
+      #assert length(BBSModels.DomainsResponse.decode(payload).domains) > 0
       send test_pid, {:done}
     end
 
@@ -28,4 +29,5 @@ defmodule BBSMqTest do
         AMQP.Connection.close(conn)
     end
   end
+
 end
