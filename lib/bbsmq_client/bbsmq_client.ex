@@ -1,6 +1,6 @@
 defmodule BBSMqClient do
-  def start_link do
-    BBSMqClient.Manager.start_link
+  def start_link(queue_name) do
+    BBSMqClient.Manager.start_link queue_name
   end
 
   for endpoint <- BBSHTTPClient.__info__(:functions)
