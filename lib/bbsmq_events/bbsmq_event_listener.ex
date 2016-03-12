@@ -31,12 +31,10 @@ defmodule BBSMq.Event.Listener do
   end
 
   def handle_info(%HTTPoison.AsyncStatus{code: 200, id: _}, state) do
-    IO.puts "CONNECTED"
     {:noreply, state}
   end
 
   def handle_info(%HTTPoison.AsyncHeaders{headers: _}, state) do
-    IO.puts "HEADERS"
     {:noreply, state}
   end
 

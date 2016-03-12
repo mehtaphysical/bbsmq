@@ -1,4 +1,4 @@
-defmodule BBSMq.Supervisor do
+defmodule BBSMq.Endpoint.Supervisor do
   use Supervisor
 
   def start_link do
