@@ -46,7 +46,7 @@ defmodule BBSMq.Consumer do
 
   defp consume(channel, bbs_address, payload, meta_data) do
     try do
-      endpoint_consumer channel, bbs_address, meta_data.routing_key, meta_data.reply_to, payload
+      endpoint_consumer channel, bbs_address, meta_data, payload
       Basic.ack channel, meta_data.delivery_tag
     rescue
       exception ->
@@ -58,9 +58,25 @@ defmodule BBSMq.Consumer do
     end
   end
 
-  defp endpoint_consumer(channel, bbs_address, routing_key, reply_to, payload) do
-    {:ok, encoded_response} = apply(BBSHTTPClient, routing_key_to_endpoint(routing_key), [bbs_address, payload])
-    Basic.publish channel, "", reply_to, encoded_response
+  defp endpoint_consumer(channel, bbs_address, meta_data, payload) do
+    {:ok, encoded_response, processor} = apply(BBSHTTPClient,
+                                    routing_key_to_endpoint(meta_data.routing_key),
+                                    [bbs_address, payload])
+    Basic.publish(channel, "",
+                  meta_data.reply_to,
+                  encoded_response,
+                  correlation_id: meta_data.correlation_id,
+                  headers: [
+                    original_routing_key: meta_data.routing_key,
+                    processor: sanitize_processor(processor)
+                    ])
+  end
+
+  defp sanitize_processor(processor) do
+    processor.__info__(:module) |>
+    Atom.to_string |>
+    String.split(".") |>
+    List.last
   end
 
   def routing_key_to_endpoint(routing_key) do

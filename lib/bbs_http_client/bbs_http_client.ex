@@ -23,76 +23,76 @@ defmodule BBSHTTPClient do
   end
 
   def ping(bbs_address, _ \\ "") do
-    request(bbs_address <> @ping_path)
+    request(bbs_address <> @ping_path, BBSModels.PingResponse)
   end
 
-  def cells(bbs_address) do
-    get_request bbs_address
+  def cells(bbs_address, _ \\ "") do
+    get_request(bbs_address <> @cell_list_path, BBSModels.CellsResponse)
   end
 
   # DomainClient
 
   def domains(bbs_address, _ \\ "") do
-    request(bbs_address <> @domain_list_path)
+    request(bbs_address <> @domain_list_path, BBSModels.DomainsResponse)
   end
 
   def upsert_domain(bbs_address, upsert_domain_request) do
     url = bbs_address <> @domain_upsert_path
-    request url, upsert_domain_request
+    request(url, BBSModels.UpsertDomainResponse, upsert_domain_request)
   end
 
   # ActualLRPClient
 
   def actual_lrp_groups(bbs_address, actual_lrp_groups_request \\ []) do
     url = bbs_address <> @actual_lrp_groups_path
-    BBSHTTPClient.request url, actual_lrp_groups_request
+    request(url, BBSModels.ActualLRPGroupsResponse, actual_lrp_groups_request)
   end
 
   def actual_lrp_groups_by_process_guid(bbs_address, actual_lrp_groups_by_process_guid_request) do
     url = bbs_address <> @actual_lrp_groups_by_process_guid_path
-    BBSHTTPClient.request url, actual_lrp_groups_by_process_guid_request
+    request(url, BBSModels.ActualLRPGroupsResponse, actual_lrp_groups_by_process_guid_request)
   end
 
   def actual_lrp_groups_by_process_guid_and_index(bbs_address, actual_lrp_groups_by_process_guid_and_index_request) do
     url = bbs_address <> @actual_lrp_groups_by_process_guid_and_index_path
-    BBSHTTPClient.request url, actual_lrp_groups_by_process_guid_and_index_request
+    request(url, BBSModels.ActualLRPGroupResponse, actual_lrp_groups_by_process_guid_and_index_request)
   end
 
   # DesiredLRPClient
 
-  def desired_lrps(bbs_address) do
-    BBSHTTPClient.request(bbs_address <> @desired_lrps_path)
+  def desired_lrps(bbs_address, _ \\ "") do
+    request(bbs_address <> @desired_lrps_path, BBSModels.DesiredLRPsResponse)
   end
 
   def desired_lrps_by_process_guid(bbs_address, desired_lrp_by_process_guid_request) do
     url = bbs_address <> @desired_lrps_by_process_guid_path
-    BBSHTTPClient.request url, desired_lrp_by_process_guid_request
+    request(url, BBSModels.DesiredLRPResponse, desired_lrp_by_process_guid_request)
   end
 
   def desired_lrp_scheduling_infos(bbs_address, desired_lrps_request) do
     url = bbs_address <> @desired_lrp_scheduling_infos_path
-    BBSHTTPClient.request url, desired_lrps_request
+    request(url, BBSModels.DesiredLRPSchedulingInfosResponse, desired_lrps_request)
   end
 
   def desire_lrp(bbs_address, desired_lrp_request) do
     url = bbs_address <> @desire_lrp_path
-    BBSHTTPClient.request url, desired_lrp_request
+    request(url, BBSModels.DesiredLRPLifecycleResponse, desired_lrp_request)
   end
 
   def update_desired_lrp(bbs_address, update_desired_lrp_request) do
     url = bbs_address <> @update_desired_lrp_path
-    BBSHTTPClient.request url, update_desired_lrp_request
+    request(url, BBSModels.DesiredLRPLifecycleResponse, update_desired_lrp_request)
   end
 
   def remove_desired_lrp(bbs_address, remove_desired_lrp_request) do
     url = bbs_address <> @remove_desired_lrp_path
-    BBSHTTPClient.request url, remove_desired_lrp_request
+    request(url, BBSModels.DesiredLRPLifecycleResponse, remove_desired_lrp_request)
   end
 
-  defp request(url, body \\ "") do
+  defp request(url, processor, body \\ "") do
     case HTTPoison.post url, body do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, body}
+        {:ok, body, processor}
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, "Not found :("}
       {:error, %HTTPoison.Error{reason: reason}} ->
@@ -106,10 +106,10 @@ defmodule BBSHTTPClient do
     request url, encoded_request_body
   end
 
-  defp get_request(url) do
+  defp get_request(url, processor) do
     case HTTPoison.get url do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, body}
+        {:ok, body, processor}
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         {:error, "Not found :("}
       {:error, %HTTPoison.Error{reason: reason}} ->
