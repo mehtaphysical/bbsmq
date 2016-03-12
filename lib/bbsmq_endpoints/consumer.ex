@@ -1,4 +1,4 @@
-defmodule BBSMq.Consumer do
+defmodule BBSMq.Endpoint.Consumer do
   use GenServer
   use AMQP
 
