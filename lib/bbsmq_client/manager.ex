@@ -45,9 +45,10 @@ defmodule BBSMqClient.Manager do
 
   def handle_info({:basic_deliver, payload, meta_data}, state) do
     handler_id = meta_data.correlation_id
-    handler = Map.get(state.callbacks, handler_id)
+    {handler, updated_callbacks} = Map.pop(state.callbacks, handler_id)
     spawn fn -> consume(state.chan, handler, payload, meta_data) end
-    {:noreply, state}
+    new_state = %{chan: state.chan, queue_name: state.queue_name, callbacks: updated_callbacks}
+    {:noreply, new_state}
   end
 
   defp consume(channel, handler, payload, meta_data) do

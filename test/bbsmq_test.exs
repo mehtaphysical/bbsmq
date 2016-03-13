@@ -4,7 +4,16 @@ defmodule BBSMqTest do
 
   @rabbitmq_address "amqp://guest:guest@localhost"
   @bbs_address "http://127.0.0.1:8889"
-  @reply_to "test_queue"
+  @reply_to "bbs_test_queue"
+
+  defmodule MyEventHandler do
+    require BBSMQClient.EventHandler
+    use BBSMQClient.EventHandler, routing_key: "actual_lrp_created"
+
+    def handle_event(%{channel: chan, payload: payload, meta_data: meta_data}) do
+      IO.puts meta_data.routing_key
+    end
+  end
 
   setup do
     {:ok, conn} = AMQP.Connection.open(@rabbitmq_address)
@@ -13,9 +22,10 @@ defmodule BBSMqTest do
   end
 
   test "BBSMq send Ping", %{chan: chan} do
-    AMQP.Queue.declare chan, @reply_to
-
-    AMQP.Queue.bind(chan, @reply_to, "bbs_events", routing_key: "#")
+    {:ok, pid} = BBSMqClient.start_link(@reply_to)
+    BBSMqClient.ping(pid, fn(ping_response, _) ->
+      IO.puts ping_response.available
+    end)
 
     receive do
       {:done} ->
