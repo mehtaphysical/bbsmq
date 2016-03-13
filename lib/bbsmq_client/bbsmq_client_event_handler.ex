@@ -1,4 +1,4 @@
-defmodule BBSMQClient.EventHandler do
+defmodule BBSMqClient.EventHandler do
 
   defmacro __using__(routing_key: routing_key) do
     if is_nil(routing_key) do
