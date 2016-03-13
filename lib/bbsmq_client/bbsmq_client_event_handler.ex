@@ -39,7 +39,7 @@ defmodule BBSMQClient.EventHandler do
       end
 
       def handle_info({:basic_deliver, payload, meta_data}, state) do
-        spawn fn -> handle_event(%{channel: state.chan, payload: payload, meta_data: meta_data}) end
+        spawn fn -> handle_event({meta_data.routing_key, %{channel: state.chan, payload: payload, meta_data: meta_data}}) end
         AMQP.Basic.ack state.chan, meta_data.delivery_tag
         {:noreply, state}
       end
