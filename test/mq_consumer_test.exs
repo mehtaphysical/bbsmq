@@ -6,8 +6,8 @@ defmodule BBSMqTest do
   @bbs_address "http://127.0.0.1:8889"
   @reply_to "test_queue"
 
-  test "BBSMq.Consumer routing_key_to_endpoint" do
-    endpoint = BBSMq.Consumer.routing_key_to_endpoint("ActualLRPGroups")
-    assert endpoint == :actual_lrp_groups
+  test "event_to_routing_key" do
+    routing_key = BBSMq.Event.Publisher.event_to_routing_key("desired_lrp_created")
+    assert routing_key == "desired_lrp.created"
   end
 end

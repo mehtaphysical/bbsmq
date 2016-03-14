@@ -19,8 +19,12 @@ defmodule BBSMq.Event.Publisher do
   end
 
   def handle_cast({:publish, %{event: event, data: data}}, chan) do
-    AMQP.Basic.publish chan, @exchange, event, data
+    AMQP.Basic.publish chan, @exchange, event_to_routing_key(event), data
     {:noreply, chan}
+  end
+
+  def event_to_routing_key(event) do
+    String.replace(event, ~r/\_(.*)\_(.*)$/, "_\\1.\\2")
   end
 
 end

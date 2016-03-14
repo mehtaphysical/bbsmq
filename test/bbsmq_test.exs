@@ -7,11 +7,11 @@ defmodule BBSMqTest do
   @reply_to "bbs_test_queue"
 
   defmodule MyEventHandler do
-    require BBSMQClient.EventHandler
-    use BBSMQClient.EventHandler, routing_key: "actual_lrp_created"
+    use BBSMqClient.EventHandler, routing_key: "actual_lrp.*"
 
-    def handle_event(%{channel: chan, payload: payload, meta_data: meta_data}) do
+    def handle_event({event, %{payload: payload, meta_data: meta_data}}) do
       IO.puts meta_data.routing_key
+      IO.puts meta_data.delivery_tag
     end
   end
 
@@ -21,11 +21,14 @@ defmodule BBSMqTest do
     {:ok, %{chan: chan}}
   end
 
-  test "BBSMq send Ping", %{chan: chan} do
+  @tag timeout: :infinity
+  test "BBSMq send Ping" do
     {:ok, pid} = BBSMqClient.start_link(@reply_to)
     BBSMqClient.ping(pid, fn(ping_response, _) ->
       IO.puts ping_response.available
     end)
+
+    #MyEventHandler.start_link(@reply_to)
 
     receive do
       {:done} ->

@@ -1,6 +1,7 @@
 defmodule BBSMqClient do
   def start_link(queue_name) do
-    BBSMqClient.Manager.start_link queue_name
+    rabbitmq_address = System.get_env("BBSMQ_CLIENT_RABBITMQ_ADDR")
+    BBSMqClient.Manager.start_link rabbitmq_address, queue_name
   end
 
   for endpoint <- BBSHTTPClient.__info__(:functions)
