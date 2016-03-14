@@ -13,13 +13,15 @@ defmodule BBSMqClient.EventHandler do
       end
 
       def init(queue_name) do
-        GenServer.cast(:bbsmq_manager, {:register_event_handler, %{pid: self, routing_key: unquote(routing_key), queue_name: queue_name}})
-        {:ok, %{}}
+        {:ok, chan} = GenServer.call(:bbsmq_manager,
+                      {:register_event_handler,
+                      %{pid: self, routing_key: unquote(routing_key), queue_name: queue_name}})
+        {:ok, chan}
       end
 
-      def handle_cast({:bbs_event, payload, meta_data}, state) do
-        spawn fn -> handle_event({meta_data.routing_key, %{payload: payload, meta_data: meta_data}}) end
-        {:noreply, state}
+      def handle_call({:bbs_event, payload, meta_data}, _from, chan) do
+        handle_event({meta_data.routing_key, %{channel: chan, payload: payload, meta_data: meta_data}})
+        {:reply, "", chan}
       end
     end
   end

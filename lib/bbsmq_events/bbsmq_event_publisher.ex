@@ -19,11 +19,26 @@ defmodule BBSMq.Event.Publisher do
   end
 
   def handle_cast({:publish, %{event: event, data: data}}, chan) do
-    AMQP.Basic.publish chan, @exchange, event_to_routing_key(event), data
+    processor = event_to_processor event
+    AMQP.Basic.publish chan, @exchange, event_to_routing_key(event), data,
+                      headers: [processor: processor]
     {:noreply, chan}
   end
 
-  def event_to_routing_key(event) do
+  defp event_to_processor(event) do
+    event <> "_event"
+    |> String.split("_")
+    |> Enum.map(fn(word) ->
+      if String.starts_with?(word, "lrp")  do
+        String.upcase(word)
+      else
+        String.capitalize(word)
+      end
+    end)
+    |> Enum.join
+  end
+
+  defp event_to_routing_key(event) do
     String.replace(event, ~r/\_(.*)\_(.*)$/, "_\\1.\\2")
   end
 

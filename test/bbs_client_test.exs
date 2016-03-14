@@ -6,6 +6,41 @@ defmodule BBSClientTest do
   @guid "distributed-lock_scheduler_default"
   @domain "scheduler"
 
+  defmodule MyEventHandler do
+    use BBSMqClient.EventHandler, routing_key: "actual_lrp.*"
+
+    def handle_event({"actual_lrp.created", %{channel: channel, payload: payload, meta_data: meta_data}}) do
+      IO.puts "actual_lrp.created"
+      net_info = payload.actual_lrp_group.instance.actual_lrp_net_info
+      address = net_info.address
+      Enum.each(net_info.ports, fn(port) ->
+        IO.puts(address <> Integer.to_string(port.host_port))
+      end)
+      AMQP.Basic.ack channel, meta_data.delivery_tag
+    end
+
+    def handle_event({"actual_lrp.changed", %{channel: channel, payload: payload, meta_data: meta_data}}) do
+      IO.puts "actual_lrp.changed"
+      net_info = payload.after.instance.actual_lrp_net_info
+      address = net_info.address
+      IO.puts payload.after.instance.state
+      Enum.each(net_info.ports, fn(port) ->
+        IO.puts(address <> ":" <> Integer.to_string(port.host_port))
+      end)
+      AMQP.Basic.ack channel, meta_data.delivery_tag
+    end
+
+    def handle_event({"actual_lrp.removed", %{channel: channel, payload: payload, meta_data: meta_data}}) do
+      IO.puts "actual_lrp.removed"
+      net_info = payload.actual_lrp_group.instance.actual_lrp_net_info
+      address = net_info.address
+      Enum.each(net_info.ports, fn(port) ->
+        IO.puts(address <> Integer.to_string(port.host_port))
+      end)
+      AMQP.Basic.ack channel, meta_data.delivery_tag
+    end
+  end
+
   def loop(times, f) do
     cond do
       times > 0 ->
@@ -17,20 +52,15 @@ defmodule BBSClientTest do
   end
 
   setup do
-    {:ok, pid} = BBSMqClient.start_link
+    {:ok, pid} = BBSMqClient.start_link("bbs_test_queue")
     {:ok, %{pid: pid}}
   end
 
+  @tag timeout: :infinity
   test "BBSClient ping", %{pid: pid}  do
-    loop(10, fn(i) -> BBSMqClient.actual_lrp_groups(pid, fn(payload, meta_data) ->
-                              payload.actual_lrp_groups
-                              |> Enum.map(fn(actual_lrp_group) ->
-                                net_info = actual_lrp_group.instance.actual_lrp_net_info
-                                Enum.map(net_info.ports, &(net_info.address <> ":" <> Integer.to_string(&1.host_port) <> "\n"))
-                              end)
-                              |> IO.puts
-                            end)
-              end)
+
+    MyEventHandler.start_link("bbs_test_queue")
+
     receive do
       {:msg} ->
     end

@@ -21,7 +21,7 @@ defmodule BBSMqClient.Manager do
   end
 
   # EventHandler registration
-  def handle_cast({:register_event_handler, %{pid: pid, routing_key: routing_key, queue_name: queue_name}}, state) do
+  def handle_call({:register_event_handler, %{pid: pid, routing_key: routing_key, queue_name: queue_name}}, _from, state) do
     AMQP.Queue.declare(state.chan, queue_name, durable: true)
     AMQP.Queue.bind(state.chan, queue_name, "bbs_events", routing_key: routing_key)
 
@@ -34,7 +34,7 @@ defmodule BBSMqClient.Manager do
     end)
 
     new_state = %{ state | :event_handlers => new_event_handlers}
-    {:noreply, new_state}
+    {:reply, {:ok, state.chan}, new_state}
   end
 
   # Publisher
@@ -87,10 +87,12 @@ defmodule BBSMqClient.Manager do
 
   defp consume_event(channel, handler_pid, payload, meta_data) do
     try do
-      GenServer.cast(handler_pid, {:bbs_event, payload, meta_data})
-      AMQP.Basic.ack channel, meta_data.delivery_tag
+      {_, _, processor} = header_by_name(meta_data.headers, "processor")
+      decoded_payload = decode_payload(processor, Base.decode64!(payload) )
+      GenServer.call(handler_pid, {:bbs_event, decoded_payload, meta_data})
     rescue
       exception ->
+        IO.puts exception
         # Todo remove pid from list
         GenServer.stop(handler_pid, :unreachable)
     end

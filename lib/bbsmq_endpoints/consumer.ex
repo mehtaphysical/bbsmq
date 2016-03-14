@@ -79,7 +79,7 @@ defmodule BBSMq.Endpoint.Consumer do
     List.last
   end
 
-  def routing_key_to_endpoint(routing_key) do
+  defp routing_key_to_endpoint(routing_key) do
     String.split(routing_key, "") |> Enum.map(fn(letter) ->
       downcased_letter = String.downcase(letter)
       if String.equivalent?(letter, downcased_letter) do

@@ -9,31 +9,28 @@ defmodule BBSMqTest do
   defmodule MyEventHandler do
     use BBSMqClient.EventHandler, routing_key: "actual_lrp.*"
 
-    def handle_event({event, %{payload: payload, meta_data: meta_data}}) do
-      IO.puts meta_data.routing_key
-      IO.puts meta_data.delivery_tag
+    def handle_event({event, %{channel: channel, payload: payload, meta_data: meta_data}}) do
+      IO.puts event
+      AMQP.Basic.ack channel, meta_data.delivery_tag
     end
   end
 
   setup do
-    {:ok, conn} = AMQP.Connection.open(@rabbitmq_address)
-    {:ok, chan} = AMQP.Channel.open(conn)
-    {:ok, %{chan: chan}}
+    System.put_env("BBSMQ_RABBITMQ_ADDR", @rabbitmq_address)
+    System.put_env("BBSMQ_CLIENT_RABBITMQ_ADDR", @rabbitmq_address)
+    System.put_env("BBSMQ_BBS_ADDR", @bbs_address)
+
+    {:ok, pid} = BBSMqClient.start_link("bbsmq_test_queue")
+    {:ok, conn} = Connection.open(rabbitmq_address)
+    {:ok, chan} = Channel.open(conn)
+
+    {:ok, %{pid: pid, chan: chan}}
   end
 
-  @tag timeout: :infinity
-  test "BBSMq send Ping" do
-    {:ok, pid} = BBSMqClient.start_link(@reply_to)
-    BBSMqClient.ping(pid, fn(ping_response, _) ->
-      IO.puts ping_response.available
+  test "BBSMq send Ping", %{pid: pid, chan: chan} do
+    BBSMqClient.ping(pid, fn(payload, meta_data) ->
+      assert payload.available == true
     end)
-
-    #MyEventHandler.start_link(@reply_to)
-
-    receive do
-      {:done} ->
-
-    end
   end
 
 end
