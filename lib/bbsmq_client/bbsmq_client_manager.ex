@@ -38,14 +38,15 @@ defmodule BBSMqClient.Manager do
   end
 
   # Publisher
-  def handle_cast({:send_message, %{endpoint: endpoint, payload: payload}, callback},
+  def handle_call({:send_message, %{endpoint: endpoint, payload: payload}},
+                  from,
                   %{chan: chan, queue_name: queue_name, endpoint_callbacks: callbacks, event_handlers: event_handlers}) do
     message_id = create_message_id
     AMQP.Basic.publish(chan, "bbs_exchange", endpoint, payload, reply_to: queue_name, correlation_id: message_id)
     {:noreply, %{
       chan: chan,
       queue_name: queue_name,
-      endpoint_callbacks: Map.put(callbacks, message_id, callback),
+      endpoint_callbacks: Map.put(callbacks, message_id, from),
       event_handlers: event_handlers
     }}
   end
@@ -101,8 +102,8 @@ defmodule BBSMqClient.Manager do
 
   defp handle_endpoint(payload, meta_data, state) do
     callback_id = meta_data.correlation_id
-    {callback, updated_callbacks} = Map.pop(state.endpoint_callbacks, callback_id)
-    spawn fn -> consume_endpoint(state.chan, callback, payload, meta_data) end
+    {callback_pid, updated_callbacks} = Map.pop(state.endpoint_callbacks, callback_id)
+    spawn fn -> consume_endpoint(state.chan, callback_pid, payload, meta_data) end
     new_state = %{
       chan: state.chan,
       queue_name: state.queue_name,
@@ -113,11 +114,11 @@ defmodule BBSMqClient.Manager do
     {:noreply, new_state}
   end
 
-  defp consume_endpoint(channel, callback, payload, meta_data) do
+  defp consume_endpoint(channel, callback_pid, payload, meta_data) do
     try do
       {_, _, processor} = header_by_name(meta_data.headers, "processor")
       decoded_payload = decode_payload(processor, payload)
-      apply(callback,[decoded_payload, meta_data])
+      GenServer.reply(callback_pid, {:ok, decoded_payload, meta_data})
       Basic.ack channel, meta_data.delivery_tag
     rescue
       exception ->
@@ -144,6 +145,7 @@ defmodule BBSMqClient.Manager do
   defp create_message_id do
     UUID.uuid4()
   end
+
 
   defp decode_payload(processor, payload) do
     apply(Module.concat(BBSModels, processor), :decode, [payload])

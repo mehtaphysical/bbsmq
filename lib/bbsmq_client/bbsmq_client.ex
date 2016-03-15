@@ -9,17 +9,17 @@ defmodule BBSMqClient do
     case endpoint  do
       {function_name, 1} ->
         def unquote(function_name)(pid, callback) do
-          send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: ""}, callback
+          send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: ""}
         end
       {function_name, 2} ->
         def unquote(function_name)(pid, payload, callback) do
-          send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: payload}, callback
+          send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: payload}
         end
     end
   end
 
-  defp send_message(pid, message, callback) do
-    GenServer.cast(pid, {:send_message, message, callback})
+  defp send_message(pid, message) do
+    GenServer.call(pid, {:send_message, message})
   end
 
   defp atom_to_endpoint_name(endpoint_atom) do

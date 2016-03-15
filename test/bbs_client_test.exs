@@ -63,32 +63,43 @@ defmodule BBSClientTest do
   end
 
   setup do
-    {:ok, pid} = BBSMqClient.start_link("bbs_test_queue")
+    {:ok, pid} = BBSMqClient.start_link("bbs_test")
     {:ok, %{pid: pid}}
   end
 
   @tag timeout: :infinity
   test "BBSClient ping", %{pid: pid}  do
-    encoded_payload = BBSModels.DesiredLRPsRequest.new([domain: ""])
+    encoded_payload = BBSModels.DesiredLRPsRequest.new([domain: "lmpp"])
     |> BBSModels.DesiredLRPsRequest.encode
-    BBSMqClient.desired_lrps(:bbsmq_manager, encoded_payload, fn(payload, meta_data) ->
-      Enum.each(payload.desired_lrps, fn(desired_lrp) ->
-        unless is_nil(desired_lrp.routes) do
-          routes = desired_lrp.routes
-          |> String.split("\n")
-          |> Enum.map(&(String.lstrip(&1)))
-          |> Enum.filter(&(String.starts_with?(&1, "tcp-router")))
-          |> Enum.join
-          |> String.replace(~r/^tcp-router.*\[/, "")
-          |> String.replace(~r/\]$/, "")
 
-          if String.length(routes) > 0 do
-            IO.puts routes
-            IO.puts Poison.Parser.parse!(routes, keys: :atoms).external_port
-          end
+    {:ok, payload, meta_data} = BBSMqClient.desired_lrps(:bbsmq_manager, encoded_payload)
+    Enum.each(payload.desired_lrps, fn(desired_lrp) ->
+      unless is_nil(desired_lrp.routes) do
+        routes = desired_lrp.routes
+        |> String.split("\n")
+        |> Enum.map(&(String.lstrip(&1)))
+        |> Enum.filter(&(String.starts_with?(&1, "tcp-router")))
+        |> Enum.join
+        |> String.replace(~r/^tcp-router.*\[/, "[")
+        |> String.replace(~r/\]$/, "]")
+
+        if String.length(routes) > 0 do
+          IO.puts routes
+          Poison.Parser.parse!(routes, keys: :atoms)
+          |> Enum.each(&(IO.puts &1.external_port))
         end
-      end)
+      end
     end)
+
+    # actual_lrp_req = BBSModels.ActualLRPGroupsRequest.new([domain: "lmpp"])
+    # |> BBSModels.ActualLRPGroupsRequest.encode
+    #
+    # BBSMqClient.actual_lrp_groups(:bbsmq_manager, actual_lrp_req, fn(payload, meta_data) ->
+    #   payload.actual_lrp_groups
+    #   |> Enum.map(&(&1.instance.actual_lrp_net_info.ports))
+    #   |> List.flatten
+    #   |> Enum.each(&(IO.puts &1.host_port))
+    # end)
     #MyEventHandler.start_link("bbs_test_queue")
 
     receive do
