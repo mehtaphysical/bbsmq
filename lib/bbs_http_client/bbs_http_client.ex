@@ -60,11 +60,11 @@ defmodule BBSHTTPClient do
 
   # DesiredLRPClient
 
-  def desired_lrps(bbs_address, _ \\ "") do
-    request(bbs_address <> @desired_lrps_path, BBSModels.DesiredLRPsResponse)
+  def desired_lrps(bbs_address, desired_lrps_request \\ "") do
+    request(bbs_address <> @desired_lrps_path, BBSModels.DesiredLRPsResponse, desired_lrps_request)
   end
 
-  def desired_lrps_by_process_guid(bbs_address, desired_lrp_by_process_guid_request) do
+  def desired_lrp_by_process_guid(bbs_address, desired_lrp_by_process_guid_request) do
     url = bbs_address <> @desired_lrps_by_process_guid_path
     request(url, BBSModels.DesiredLRPResponse, desired_lrp_by_process_guid_request)
   end

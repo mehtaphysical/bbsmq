@@ -26,6 +26,17 @@ defmodule BBSClientTest do
       IO.puts payload.after.instance.state
       Enum.each(net_info.ports, fn(port) ->
         IO.puts(address <> ":" <> Integer.to_string(port.host_port))
+        IO.puts(address <> ":" <> Integer.to_string(port.container_port))
+      end)
+      encoded_payload = BBSModels.DesiredLRPByProcessGuidRequest.new([process_guid: "distributed-lock_community_default"])
+      |> BBSModels.DesiredLRPByProcessGuidRequest.encode
+      BBSMqClient.desired_lrp_by_process_guid(:bbsmq_manager, encoded_payload, fn(desired_lrp_by_process_guid_repones, meta_data) ->
+        IO.puts desired_lrp_by_process_guid_repones.desired_lrp.routes
+        desired_lrp_by_process_guid_repones.desired_lrp.routes
+        # |> String.replace(~r/\s*x\s*/, "")
+        |> String.replace("tcp-router", "tcp_router")
+        #|> BBSModels.Routes.decode
+        |> IO.puts
       end)
       AMQP.Basic.ack channel, meta_data.delivery_tag
     end
@@ -58,8 +69,27 @@ defmodule BBSClientTest do
 
   @tag timeout: :infinity
   test "BBSClient ping", %{pid: pid}  do
+    encoded_payload = BBSModels.DesiredLRPsRequest.new([domain: ""])
+    |> BBSModels.DesiredLRPsRequest.encode
+    BBSMqClient.desired_lrps(:bbsmq_manager, encoded_payload, fn(payload, meta_data) ->
+      Enum.each(payload.desired_lrps, fn(desired_lrp) ->
+        unless is_nil(desired_lrp.routes) do
+          routes = desired_lrp.routes
+          |> String.split("\n")
+          |> Enum.map(&(String.lstrip(&1)))
+          |> Enum.filter(&(String.starts_with?(&1, "tcp-router")))
+          |> Enum.join
+          |> String.replace(~r/^tcp-router.*\[/, "")
+          |> String.replace(~r/\]$/, "")
 
-    MyEventHandler.start_link("bbs_test_queue")
+          if String.length(routes) > 0 do
+            IO.puts routes
+            IO.puts Poison.Parser.parse!(routes, keys: :atoms).external_port
+          end
+        end
+      end)
+    end)
+    #MyEventHandler.start_link("bbs_test_queue")
 
     receive do
       {:msg} ->
