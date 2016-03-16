@@ -16,13 +16,21 @@ defmodule BBSMqClient.EventHandler do
         {:ok, chan} = GenServer.call(:bbsmq_manager,
                       {:register_event_handler,
                       %{pid: self, routing_key: unquote(routing_key), queue_name: queue_name}})
+
+        setup()
         {:ok, chan}
+      end
+
+      def setup do
+        # Override
       end
 
       def handle_call({:bbs_event, payload, meta_data}, _from, chan) do
         handle_event({meta_data.routing_key, %{channel: chan, payload: payload, meta_data: meta_data}})
         {:reply, "", chan}
       end
+
+      defoverridable [setup: 0]
     end
   end
 end
