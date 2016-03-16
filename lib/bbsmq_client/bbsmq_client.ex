@@ -8,11 +8,11 @@ defmodule BBSMqClient do
                   |> Enum.reject(fn(ele) -> ele == {:init, 0} end) do
     case endpoint  do
       {function_name, 1} ->
-        def unquote(function_name)(pid, callback) do
+        def unquote(function_name)(pid) do
           send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: ""}
         end
       {function_name, 2} ->
-        def unquote(function_name)(pid, payload, callback) do
+        def unquote(function_name)(pid, payload) do
           send_message pid, %{endpoint: atom_to_endpoint_name(unquote(function_name)), payload: payload}
         end
     end
