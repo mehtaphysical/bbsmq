@@ -1,7 +1,7 @@
 defmodule BBSMqClient.EventHandler do
 
   defmacro __using__(routing_keys: routing_keys) do
-    if is_nil(routing_key) do
+    if is_nil(routing_keys) do
       raise "EventHandlers must declare a routing_key`)"
     end
 
