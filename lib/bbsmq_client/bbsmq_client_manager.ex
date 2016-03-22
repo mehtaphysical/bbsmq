@@ -21,19 +21,22 @@ defmodule BBSMqClient.Manager do
   end
 
   # EventHandler registration
-  def handle_call({:register_event_handler, %{pid: pid, routing_key: routing_key, queue_name: queue_name}}, _from, state) do
+  def handle_call({:register_event_handler, %{pid: pid, routing_keys: routing_keys, queue_name: queue_name}}, _from, state) do
     AMQP.Queue.declare(state.chan, queue_name, durable: true)
-    AMQP.Queue.bind(state.chan, queue_name, "bbs_events", routing_key: routing_key)
 
-    {_, new_event_handlers} = Map.get_and_update(state.event_handlers, routing_key, fn(current_handlers) ->
-      if is_nil(current_handlers) do
-        {current_handlers, [pid]}
-      else
-        {current_handlers, current_handlers ++ pid}
-      end
+    updated_event_handlers = Enum.reduce(routing_keys, state.event_handlers, fn(routing_key, updated_event_handlers) ->
+      {_, new_event_handlers} = Map.get_and_update(updated_event_handlers, routing_key, fn(current_handlers) ->
+        if is_nil(current_handlers) do
+          {current_handlers, [pid]}
+        else
+          {current_handlers, current_handlers ++ pid}
+        end
+      end)
+      AMQP.Queue.bind(state.chan, queue_name, "bbs_events", routing_key: routing_key)
+      new_event_handlers
     end)
 
-    new_state = %{ state | :event_handlers => new_event_handlers}
+    new_state = %{ state | event_handlers: updated_event_handlers}
     {:reply, {:ok, state.chan}, new_state}
   end
 
