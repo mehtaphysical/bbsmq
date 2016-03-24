@@ -19,7 +19,7 @@ defmodule Bbsmq.Mixfile do
   defp deps do
     [
       {:amqp, "0.1.4"},
-      {:exprotobuf, git: "https://github.com/bitwalker/exprotobuf.git"},
+      {:exprotobuf, "~> 1.0.0"},
       {:httpoison, "~> 0.8.0"},
       { :uuid, "~> 1.1" },
       {:poison, "~> 2.0"}
