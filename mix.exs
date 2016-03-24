@@ -10,23 +10,11 @@ defmodule Bbsmq.Mixfile do
      deps: deps]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger],
       mod: {BBSMq, []}]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type "mix help deps" for more examples and options
   defp deps do
     [
       {:amqp, "0.1.4"},
@@ -36,4 +24,18 @@ defmodule Bbsmq.Mixfile do
       {:poison, "~> 2.0"}
     ]
   end
+
+  defp description do
+  """
+  Translate CloudFoundry BBS events and endpoints into rabbitmq messages.
+  """
+end
+
+defp package do
+  [
+   files: ["lib", "mix.exs", "README*"],
+   maintainers: ["Ryan Mehta"],
+   links: %{"GitHub" => "https://github.com/mehtaphysical/bbsmq"]
+end
+
 end
