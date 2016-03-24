@@ -5,6 +5,7 @@ defmodule Bbsmq.Mixfile do
     [app: :bbsmq,
      version: "0.0.1",
      elixir: "~> 1.2",
+     description: description,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -35,7 +36,8 @@ defp package do
   [
    files: ["lib", "mix.exs", "README*"],
    maintainers: ["Ryan Mehta"],
-   links: %{"GitHub" => "https://github.com/mehtaphysical/bbsmq"]
+   links: %{"GitHub" => "https://github.com/mehtaphysical/bbsmq"}
+  ]
 end
 
 end
