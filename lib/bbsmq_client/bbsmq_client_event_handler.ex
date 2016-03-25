@@ -30,7 +30,7 @@ defmodule BBSMqClient.EventHandler do
         {:reply, "", chan}
       end
 
-      defoverridable [setup: 0]
+      defoverridable [setup: 1]
     end
   end
 end

@@ -3,7 +3,7 @@ defmodule Bbsmq.Mixfile do
 
   def project do
     [app: :bbsmq,
-     version: "0.0.3",
+     version: "0.0.4",
      elixir: "~> 1.2",
      description: description,
      build_embedded: Mix.env == :prod,
