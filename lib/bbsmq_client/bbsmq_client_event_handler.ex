@@ -17,11 +17,11 @@ defmodule BBSMqClient.EventHandler do
                       {:register_event_handler,
                       %{pid: self, routing_keys: unquote(routing_keys), queue_name: queue_name}})
 
-        setup()
+        setup(chan)
         {:ok, chan}
       end
 
-      def setup do
+      def setup(chan) do
         # Override
       end
 
