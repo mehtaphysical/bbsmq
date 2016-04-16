@@ -1,4 +1,6 @@
 defmodule BBSMqClient.Manager do
+  require Logger
+
   use GenServer
   use AMQP
 
@@ -96,7 +98,7 @@ defmodule BBSMqClient.Manager do
       GenServer.call(handler_pid, {:bbs_event, decoded_payload, meta_data})
     rescue
       exception ->
-        IO.puts exception
+        Logger.error("Error proccessing event payload: " <> payload)
         # Todo remove pid from list
         GenServer.stop(handler_pid, :unreachable)
     end
@@ -125,7 +127,7 @@ defmodule BBSMqClient.Manager do
       Basic.ack channel, meta_data.delivery_tag
     rescue
       exception ->
-        IO.puts exception.message
+        Logger.error("Error proccessing endpoint payload: " <> payload)
         # Requeue unless it's a redelivered message.
         # This means we will retry consuming a message once in case of exception
         # before we give up and have it moved to the error queue
