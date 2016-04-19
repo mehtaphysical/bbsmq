@@ -31,7 +31,7 @@ defmodule BBSMqClient.Manager do
         if is_nil(current_handlers) do
           {current_handlers, [pid]}
         else
-          {current_handlers, current_handlers ++ pid}
+          {current_handlers, current_handlers ++ [pid]}
         end
       end)
       AMQP.Queue.bind(state.chan, queue_name, "bbs_events", routing_key: routing_key)
